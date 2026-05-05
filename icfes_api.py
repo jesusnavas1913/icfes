@@ -65,10 +65,9 @@ CORS(app, resources={
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 if not GOOGLE_API_KEY:
-    logger.error("❌ GOOGLE_API_KEY no encontrada en variables de entorno")
-    raise ValueError("Se requiere GOOGLE_API_KEY en archivo .env")
-
-genai.configure(api_key=GOOGLE_API_KEY)
+    logger.warning("GOOGLE_API_KEY no encontrada - la IA estará deshabilitada hasta que se configure")
+else:
+    genai.configure(api_key=GOOGLE_API_KEY)
 
 # ============================================================
 # AUTENTICACIÓN COMPLETAMENTE REMOVIDA DEL BACKEND
@@ -82,9 +81,19 @@ genai.configure(api_key=GOOGLE_API_KEY)
 class GeminiEvaluator:
     def __init__(self):
         self.model_name = 'models/gemini-2.5-flash-lite'
-        self.model = genai.GenerativeModel(self.model_name)
+        self._model = None  # lazy init para evitar crash al arrancar sin API key
         self.custom_knowledge_base = {}  # Base de conocimiento personalizada
         self.trained_prompts = {}  # Prompts entrenados por competencia
+
+    @property
+    def model(self):
+        if self._model is None:
+            api_key = os.getenv("GOOGLE_API_KEY")
+            if not api_key:
+                raise ValueError("GOOGLE_API_KEY no configurada. Agrégala en Vercel > Settings > Environment Variables")
+            genai.configure(api_key=api_key)
+            self._model = genai.GenerativeModel(self.model_name)
+        return self._model
 
     def _make_gemini_request(self, prompt, temperature=0.3, max_tokens=2000, max_retries=3):
         """Hace una petición a la API de Google Gemini con manejo robusto de errores"""
