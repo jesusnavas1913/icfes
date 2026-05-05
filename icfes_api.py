@@ -12,14 +12,17 @@ from io import BytesIO
 import re
 from werkzeug.utils import secure_filename
 import tempfile                                                                                                                          
-import matplotlib
-matplotlib.use('Agg')  # usar backend no interactivo para servidores
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from io import BytesIO
-import base64
-import numpy as np
-from charts import bar_chart_exam, pie_chart_exam
+HAS_CHARTS = False
+try:
+    import matplotlib
+    matplotlib.use('Agg')  # usar backend no interactivo para servidores
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as patches
+    import numpy as np
+    from charts import bar_chart_exam, pie_chart_exam
+    HAS_CHARTS = True
+except ImportError:
+    logging.warning("Matplotlib/Numpy no instalados. Las funciones de gráficos estarán deshabilitadas.")
 
 import sys
 if hasattr(sys.stdout, "reconfigure"):
@@ -939,6 +942,8 @@ def save_model():
 @app.route('/generate-visual', methods=['POST'])
 @csrf.exempt
 def generate_visual():
+    if not HAS_CHARTS:
+        return jsonify({'error': 'Gráficos deshabilitados temporalmente por límite de memoria en Vercel'}), 503
     """Genera gráficos visuales (bar/pie) para análisis de preguntas ICFES usando Gemini para datos"""
     data = request.json
     chart_type = data.get('chart_type', 'bar').lower()
@@ -1074,6 +1079,8 @@ IMPORTANTE: El JSON debe ser válido y parseable. Los valores deben ser números
 @app.route('/generate-visual-by-competencia', methods=['POST'])
 @csrf.exempt
 def generate_visual_by_competencia():
+    if not HAS_CHARTS:
+        return jsonify({'error': 'Gráficos deshabilitados temporalmente por límite de memoria en Vercel'}), 503
     """Agrupa elementos por 'competencia' y genera un gráfico de barras editorial.
 
     Entrada JSON esperada:
