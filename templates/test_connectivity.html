@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Conectividad - ICFES Pro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .test-box {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        .success {
+            color: #10b981;
+        }
+
+        .error {
+            color: #ef4444;
+        }
+
+        pre {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔧 Test de Conectividad Backend</h1>
+
+    <div class="test-box">
+        <h2>1. Test Health Check</h2>
+        <button onclick="testHealth()">Probar /health</button>
+        <div id="health-result"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>2. Test Generar Pregunta</h2>
+        <button onclick="testGenerateQuestion()">Probar /generate-question</button>
+        <div id="generate-result"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>3. Información del Sistema</h2>
+        <p><strong>URL Actual:</strong> <span id="current-url"></span></p>
+        <p><strong>Hostname:</strong> <span id="hostname"></span></p>
+        <p><strong>API URL Detectada:</strong> <span id="api-url"></span></p>
+    </div>
+
+    <script>
+        // Mostrar información del sistema
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('hostname').textContent = window.location.hostname;
+
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://127.0.0.1:5000'
+            : 'https://icfes-ia.onrender.com';
+
+        document.getElementById('api-url').textContent = API_URL;
+
+        async function testHealth() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.innerHTML = '<p>⏳ Probando...</p>';
+
+            try {
+                // Usamos /health que es el endpoint existente
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Conexión exitosa!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Error: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Error de conexión</p>
+                    <p>${error.message}</p>
+                    <p><strong>Posibles causas:</strong></p>
+                    <ul>
+                        <li>El backend no está corriendo</li>
+                        <li>El puerto 5000 está bloqueado</li>
+                        <li>Problema de CORS</li>
+                    </ul>
+                `;
+            }
+        }
+
+        async function testGenerateQuestion() {
+            const resultDiv = document.getElementById('generate-result');
+            resultDiv.innerHTML = '<p>⏳ Generando pregunta de prueba...</p>';
+
+            try {
+                const response = await fetch(`${API_URL}/generate-question`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        competencia: 'Matemáticas',
+                        num_questions: 1,
+                        dificultad: 'medio',
+                        use_custom_knowledge: false
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.questions) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Pregunta generada exitosamente!</p>
+                        <p><strong>Competencia:</strong> ${data.competencia}</p>
+                        <p><strong>Dificultad:</strong> ${data.dificultad}</p>
+                        <details>
+                            <summary>Ver pregunta generada</summary>
+                            <pre>${data.questions}</pre>
+                        </details>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Error: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Error de conexión</p>
+                    <p>${error.message}</p>
+                    <p><strong>Verifica que:</strong></p>
+                    <ul>
+                        <li>El backend esté corriendo en el puerto 5000</li>
+                        <li>GOOGLE_API_KEY esté configurada en .env</li>
+                        <li>No haya errores en la consola del servidor</li>
+                    </ul>
+                `;
+            }
+        }
+    </script>
+</body>
+
+</html>

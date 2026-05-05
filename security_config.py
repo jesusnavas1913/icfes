@@ -9,7 +9,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 
-def configure_security(app):
+def configure_security(app, csrf):
     """
     Configura las medidas de seguridad críticas para la aplicación Flask
     
@@ -23,7 +23,7 @@ def configure_security(app):
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
     
     # 2. Configurar CSRF Protection
-    csrf = CSRFProtect(app)
+    csrf.init_app(app)
     
     # 3. Configurar Rate Limiting
     limiter = Limiter(
@@ -40,7 +40,7 @@ def configure_security(app):
         from flask import session
         session.permanent = True
     
-    return limiter, csrf
+    return limiter
 
 
 # ===========================================

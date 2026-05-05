@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ICFES Pro - Simulador de Exámenes</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet" />
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         :root {
             --primary: #667eea;
             --secondary: #764ba2;
@@ -20,6 +23,7 @@
             --text-light: #fff;
             --text-muted: rgba(255, 255, 255, 0.7);
         }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--background);
@@ -28,6 +32,7 @@
             overflow-x: hidden;
             padding: 0 20px 60px;
         }
+
         .navbar {
             position: fixed;
             top: 0;
@@ -42,12 +47,14 @@
             justify-content: space-between;
             z-index: 1000;
         }
+
         .logo-container {
             display: flex;
             align-items: center;
             gap: 12px;
             cursor: pointer;
         }
+
         .logo-icon {
             width: 40px;
             height: 40px;
@@ -60,6 +67,7 @@
             box-shadow: 0 8px 32px rgba(102, 126, 234, 0.5);
             color: white;
         }
+
         .logo-text {
             font-size: 22px;
             font-weight: 900;
@@ -67,6 +75,7 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+
         .btn-back {
             background: rgba(255, 255, 255, 0.05);
             color: var(--text-light);
@@ -79,11 +88,13 @@
             transition: all 0.3s ease;
             text-decoration: none;
         }
+
         .btn-back:hover {
             background: rgba(255, 255, 255, 0.1);
             transform: translateX(-3px);
             border-color: rgba(255, 255, 255, 0.3);
         }
+
         main {
             max-width: 900px;
             margin: 100px auto 40px;
@@ -93,6 +104,7 @@
             padding: 40px 50px;
             box-shadow: 0 0 40px rgba(102, 126, 234, 0.3);
         }
+
         h1 {
             font-size: 36px;
             font-weight: 900;
@@ -102,15 +114,18 @@
             -webkit-text-fill-color: transparent;
             text-align: center;
         }
+
         p.subtitle {
             font-size: 16px;
             color: var(--text-muted);
             text-align: center;
             margin-bottom: 40px;
         }
+
         .form-group {
             margin-bottom: 25px;
         }
+
         label {
             display: block;
             font-weight: 700;
@@ -120,7 +135,9 @@
             letter-spacing: 0.5px;
             color: var(--text-light);
         }
-        select, input[type=number] {
+
+        select,
+        input[type=number] {
             width: 100%;
             padding: 14px 18px;
             border-radius: 14px;
@@ -131,12 +148,15 @@
             font-weight: 500;
             transition: border-color 0.3s ease;
         }
-        select:focus, input[type=number]:focus {
+
+        select:focus,
+        input[type=number]:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 10px var(--primary);
             background: rgba(255, 255, 255, 0.1);
         }
+
         button.btn-primary {
             width: 100%;
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
@@ -152,6 +172,7 @@
             position: relative;
             overflow: hidden;
         }
+
         button.btn-primary::before {
             content: '';
             position: absolute;
@@ -159,45 +180,54 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
             transition: left 0.6s ease;
         }
+
         button.btn-primary:hover::before {
             left: 100%;
         }
+
         button.btn-primary:hover {
             transform: translateY(-5px) scale(1.05);
             box-shadow: 0 20px 60px rgba(102, 126, 234, 0.7);
         }
+
         button.btn-primary:active {
             transform: translateY(-2px) scale(1.02);
         }
+
         .exam-container {
             margin-top: 40px;
             display: none;
             flex-direction: column;
             gap: 30px;
         }
+
         .exam-container.active {
             display: flex;
         }
+
         .question-header {
             font-weight: 700;
             font-size: 18px;
             color: var(--primary);
             margin-bottom: 10px;
         }
+
         .question-text {
             font-size: 22px;
             font-weight: 600;
             margin-bottom: 20px;
             color: var(--text-light);
         }
+
         .options-list {
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
+
         .option-item {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 14px;
@@ -209,25 +239,30 @@
             align-items: center;
             gap: 15px;
         }
+
         .option-item:hover {
             border-color: var(--primary);
             background: rgba(102, 126, 234, 0.15);
         }
+
         .option-item.selected {
             border-color: var(--secondary);
             background: rgba(118, 75, 162, 0.25);
         }
+
         .option-label {
             flex: 1;
             font-size: 16px;
             color: var(--text-light);
             font-weight: 500;
         }
+
         .navigation-buttons {
             display: flex;
             justify-content: space-between;
             margin-top: 30px;
         }
+
         .btn-secondary {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -239,15 +274,18 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
+
         .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.1);
             transform: translateY(-3px);
             border-color: var(--primary);
         }
+
         .btn-secondary:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
+
         .timer {
             font-size: 18px;
             font-weight: 700;
@@ -255,60 +293,73 @@
             text-align: center;
             margin-bottom: 30px;
         }
+
         .result-container {
             display: none;
             flex-direction: column;
             gap: 25px;
             text-align: center;
         }
+
         .result-container.active {
             display: flex;
         }
+
         .result-title {
             font-size: 28px;
             font-weight: 900;
             color: var(--primary);
         }
+
         .result-summary {
             font-size: 18px;
             color: var(--text-muted);
         }
+
         .result-details {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 20px;
             margin-top: 20px;
         }
+
         .result-card {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 20px;
             padding: 25px;
             box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
         }
+
         .result-card h3 {
             font-size: 20px;
             font-weight: 700;
             margin-bottom: 10px;
             color: var(--secondary);
         }
+
         .result-card p {
             font-size: 16px;
             color: var(--text-light);
         }
+
         @media (max-width: 768px) {
             main {
                 padding: 30px 20px;
             }
+
             .navigation-buttons {
                 flex-direction: column;
                 gap: 15px;
             }
-            .btn-secondary, button.btn-primary {
+
+            .btn-secondary,
+            button.btn-primary {
                 width: 100%;
             }
         }
     </style>
 </head>
+
 <body>
     <nav class="navbar">
         <div class="logo-container" onclick="window.location.href='/inicio'">
@@ -332,6 +383,11 @@
                     <option value="Ciencias Naturales">Ciencias Naturales</option>
                     <option value="Ciencias Sociales">Ciencias Sociales</option>
                     <option value="Inglés">Inglés</option>
+                    <option value="Filosofía">Filosofía</option>
+                    <option value="Dimensión corporal">Dimensión corporal</option>
+                    <option value="Dimensión Cognitiva">Dimensión Cognitiva</option>
+                    <option value="Dimensión socioafectiva">Dimensión socioafectiva</option>
+                    <option value="Dimensión comunicativa">Dimensión comunicativa</option>
                 </select>
             </div>
             <div class="form-group">
@@ -446,7 +502,7 @@
             if (!rawQuestion) return null;
             const lines = rawQuestion.split('\n').map(l => l.trim()).filter(l => l);
             let questionText = '', options = [], correctAnswer = '', explanation = '';
-            
+
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 if (line.startsWith('Pregunta:')) {
@@ -648,24 +704,24 @@
                         ylabel: 'Número de Preguntas'
                     })
                 })
-                .then(r => r.json())
-                .then(chartData => {
-                    if (chartData && chartData.success && chartData.image) {
-                        const img = document.createElement('img');
-                        img.src = chartData.image;
-                        img.alt = 'Gráfico de rendimiento';
-                        img.style.maxWidth = '100%';
-                        img.style.borderRadius = '12px';
-                        img.style.boxShadow = '0 10px 30px rgba(0,0,0,0.3)';
-                        const chartDiv = document.getElementById('resultChart');
-                        chartDiv.innerHTML = '';
-                        chartDiv.appendChild(img);
-                        document.getElementById('resultChartCard').style.display = 'block';
-                    }
-                })
-                .catch(() => {
-                    // si falla, no bloquear resultados
-                });
+                    .then(r => r.json())
+                    .then(chartData => {
+                        if (chartData && chartData.success && chartData.image) {
+                            const img = document.createElement('img');
+                            img.src = chartData.image;
+                            img.alt = 'Gráfico de rendimiento';
+                            img.style.maxWidth = '100%';
+                            img.style.borderRadius = '12px';
+                            img.style.boxShadow = '0 10px 30px rgba(0,0,0,0.3)';
+                            const chartDiv = document.getElementById('resultChart');
+                            chartDiv.innerHTML = '';
+                            chartDiv.appendChild(img);
+                            document.getElementById('resultChartCard').style.display = 'block';
+                        }
+                    })
+                    .catch(() => {
+                        // si falla, no bloquear resultados
+                    });
 
             } catch (error) {
                 console.error('Error al enviar respuestas:', error);
@@ -794,4 +850,5 @@
         }
     </script>
 </body>
+
 </html>

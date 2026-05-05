@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICFES IA - Inicio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            text-align: center;
+            color: white;
+            padding: 40px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .info {
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .info h3 {
+            margin-bottom: 15px;
+        }
+
+        .info ul {
+            list-style: none;
+            text-align: left;
+            display: inline-block;
+        }
+
+        .info li {
+            margin: 10px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .info li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎓 ICFES IA</h1>
+        <p>Plataforma Inteligente de Preparación para el ICFES</p>
+
+        <div class="buttons">
+            <a href="/login" class="btn btn-primary">Iniciar Sesión</a>
+            <a href="/register/estudiante" class="btn btn-secondary">Registrarse como Estudiante</a>
+            <a href="/register/profesor" class="btn btn-secondary">Registrarse como Profesor</a>
+        </div>
+
+        <div class="info">
+            <h3>¿Qué puedes hacer?</h3>
+            <ul>
+                <li>Generar preguntas ICFES con IA</li>
+                <li>Recibir feedback personalizado</li>
+                <li>Practicar con exámenes simulados</li>
+                <li>Analizar documentos PDF</li>
+                <li>Chat con IA para resolver dudas</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <a href="/admin/login" style="color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.9rem;">
+                Acceso Administrador →
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>

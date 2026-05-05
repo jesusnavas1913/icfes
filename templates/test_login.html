@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login - ICFES IA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🧪 Test de Login</h1>
+
+        <div class="info" style="display: block;">
+            <strong>Credenciales de prueba:</strong><br>
+            Admin: 123456789 / administrador123123456789
+        </div>
+
+        <form id="testForm">
+            <div class="form-group">
+                <label>Cédula:</label>
+                <input type="text" id="cedula" value="123456789" required>
+            </div>
+
+            <div class="form-group">
+                <label>Contraseña:</label>
+                <input type="password" id="password" value="administrador123123456789" required>
+            </div>
+
+            <button type="submit">🔐 Probar Login</button>
+        </form>
+
+        <div id="message" class="message"></div>
+
+        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+            <strong>Debug Info:</strong>
+            <div id="debug" style="font-family: monospace; font-size: 12px; margin-top: 10px;"></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('testForm');
+        const messageDiv = document.getElementById('message');
+        const debugDiv = document.getElementById('debug');
+
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+        }
+
+        function addDebug(text) {
+            const time = new Date().toLocaleTimeString();
+            debugDiv.innerHTML += `[${time}] ${text}<br>`;
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const cedula = document.getElementById('cedula').value;
+            const password = document.getElementById('password').value;
+
+            addDebug('Iniciando prueba de login...');
+            addDebug(`Cédula: ${cedula}`);
+            addDebug(`Password: ${password.substring(0, 5)}...`);
+
+            try {
+                addDebug('Enviando solicitud POST a /login...');
+
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        cedula: cedula,
+                        password: password
+                    })
+                });
+
+                addDebug(`Respuesta recibida: ${response.status} ${response.statusText}`);
+
+                const data = await response.json();
+                addDebug(`Datos: ${JSON.stringify(data)}`);
+
+                if (data.success) {
+                    showMessage(`✅ Login exitoso! Redirigiendo a ${data.redirect}`, 'success');
+                    addDebug(`✅ Login exitoso!`);
+                    setTimeout(() => {
+                        window.location.href = data.redirect;
+                    }, 1500);
+                } else {
+                    showMessage(`❌ Error: ${data.message}`, 'error');
+                    addDebug(`❌ Error: ${data.message}`);
+                }
+            } catch (error) {
+                showMessage(`❌ Error de conexión: ${error.message}`, 'error');
+                addDebug(`❌ Error de conexión: ${error.message}`);
+                addDebug(`Stack: ${error.stack}`);
+            }
+        });
+
+        addDebug('Página cargada correctamente');
+        addDebug(`URL actual: ${window.location.href}`);
+    </script>
+</body>
+
+</html>

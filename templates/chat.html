@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ICFES Pro - Tutor IA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -190,8 +192,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .message.user {
@@ -263,12 +272,25 @@
             animation: typing 1.4s infinite;
         }
 
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
 
         @keyframes typing {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-10px); }
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+            }
+
+            30% {
+                transform: translateY(-10px);
+            }
         }
 
         .chat-input-container {
@@ -409,6 +431,7 @@
         }
     </style>
 </head>
+
 <body>
     <nav class="navbar">
         <div class="logo">Tutor IA - ICFES Pro</div>
@@ -434,16 +457,19 @@
                     <div class="welcome-title">¡Hola! Soy tu tutor IA especializado en ICFES</div>
                     <div class="welcome-text">
                         Estoy aquí para ayudarte con cualquier duda sobre matemáticas, lenguaje, ciencias naturales,
-                        ciencias sociales, inglés y todas las áreas del examen ICFES colombiano.
+                        ciencias sociales, inglés, filosofía, dimensiones corporales, cognitivas, socioafectivas,
+                        comunicativas y todas las áreas del examen ICFES colombiano.
                     </div>
                     <div class="suggestions">
-                        <button class="suggestion-btn" onclick="sendSuggestion('¿Cómo puedo mejorar mi rendimiento en matemáticas?')">
+                        <button class="suggestion-btn"
+                            onclick="sendSuggestion('¿Cómo puedo mejorar mi rendimiento en matemáticas?')">
                             ¿Cómo mejorar en matemáticas?
                         </button>
                         <button class="suggestion-btn" onclick="sendSuggestion('Explícame el teorema de Pitágoras')">
                             Teorema de Pitágoras
                         </button>
-                        <button class="suggestion-btn" onclick="sendSuggestion('¿Qué temas son más importantes para ICFES?')">
+                        <button class="suggestion-btn"
+                            onclick="sendSuggestion('¿Qué temas son más importantes para ICFES?')">
                             Temas importantes ICFES
                         </button>
                         <button class="suggestion-btn" onclick="sendSuggestion('Ayúdame con un problema de física')">
@@ -469,13 +495,8 @@
             </div>
 
             <div class="chat-input-container">
-                <textarea
-                    class="chat-input"
-                    id="chatInput"
-                    placeholder="Escribe tu pregunta sobre ICFES..."
-                    rows="1"
-                    maxlength="1000"
-                ></textarea>
+                <textarea class="chat-input" id="chatInput" placeholder="Escribe tu pregunta sobre ICFES..." rows="1"
+                    maxlength="1000"></textarea>
                 <button class="send-btn" id="sendBtn" disabled>
                     <span id="sendIcon">📤</span>
                 </button>
@@ -485,21 +506,21 @@
 
     <script>
         // Initialize user data
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const userName = 'Usuario'; // In a real app, get from session
             document.getElementById('userName').textContent = userName;
             document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();
 
             // Auto-resize textarea
             const chatInput = document.getElementById('chatInput');
-            chatInput.addEventListener('input', function() {
+            chatInput.addEventListener('input', function () {
                 this.style.height = 'auto';
                 this.style.height = Math.min(this.scrollHeight, 120) + 'px';
                 updateSendButton();
             });
 
             // Enter key to send
-            chatInput.addEventListener('keydown', function(e) {
+            chatInput.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     sendMessage();
@@ -625,4 +646,5 @@
         });
     </script>
 </body>
+
 </html>

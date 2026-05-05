@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ICFES Pro - Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -174,7 +176,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .error-message {
@@ -210,16 +214,21 @@
         }
 
         @keyframes float {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: translateY(0) translateX(0);
                 opacity: 0;
             }
+
             10% {
                 opacity: 1;
             }
+
             90% {
                 opacity: 1;
             }
+
             100% {
                 transform: translateY(-100vh) translateX(100px);
                 opacity: 0;
@@ -250,6 +259,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="floating-particles" id="particles"></div>
 
@@ -265,12 +275,14 @@
         <form id="loginForm">
             <div class="form-group">
                 <label class="form-label" for="cedula">Cédula</label>
-                <input type="text" id="cedula" name="cedula" class="form-input" placeholder="Ingrese su número de cédula" required autocomplete="off">
+                <input type="text" id="cedula" name="cedula" class="form-input"
+                    placeholder="Ingrese su número de cédula" required autocomplete="off">
             </div>
 
             <div class="form-group">
                 <label class="form-label" for="password">Contraseña</label>
-                <input type="password" id="password" name="password" class="form-input" placeholder="Ingrese su contraseña" required autocomplete="off">
+                <input type="password" id="password" name="password" class="form-input"
+                    placeholder="Ingrese su contraseña" required autocomplete="off">
             </div>
 
             <button type="submit" class="login-btn" id="loginBtn">
@@ -280,8 +292,10 @@
 
         <div style="text-align: center; margin-top: 20px;">
             <p style="color: rgba(255, 255, 255, 0.8); font-size: 14px;">
-                ¿No tienes cuenta? <a href="/register/estudiante" style="color: #667eea; text-decoration: none; font-weight: 600;">Regístrate como Estudiante</a> |
-                <a href="/register/profesor" style="color: #667eea; text-decoration: none; font-weight: 600;">Regístrate como Profesor</a>
+                ¿No tienes cuenta? <a href="/register/estudiante"
+                    style="color: #667eea; text-decoration: none; font-weight: 600;">Regístrate como Estudiante</a> |
+                <a href="/register/profesor" style="color: #667eea; text-decoration: none; font-weight: 600;">Regístrate
+                    como Profesor</a>
             </p>
         </div>
     </div>
@@ -307,7 +321,7 @@
         const errorMessage = document.getElementById('errorMessage');
         const cedulaInput = document.getElementById('cedula');
 
-        loginForm.addEventListener('submit', async function(e) {
+        loginForm.addEventListener('submit', async function (e) {
             e.preventDefault();
 
             const cedula = cedulaInput.value.trim();
@@ -349,7 +363,8 @@
                     loginBtn.innerHTML = 'Iniciar Sesión';
                 }
             } catch (error) {
-                showError('Error de conexión. Intente nuevamente.');
+                console.error('Error completo:', error);
+                showError(`Error de conexión: ${error.message}. Verifique que el servidor esté corriendo en http://localhost:5000`);
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = 'Iniciar Sesión';
             }
@@ -388,4 +403,5 @@
         }
     </script>
 </body>
+
 </html>
