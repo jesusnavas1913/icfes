@@ -1,3 +1,0 @@
-- [ ] Cambiar mensajes de error en app.py para login regular y admin a "Cédula o contraseña incorrecta"
-- [ ] Cambiar mensajes de error en static/js/login-supabase-integration.js a "Cédula o contraseña incorrecta"
-- [ ] Verificar que los cambios sean consistentes y mejoren la seguridad
