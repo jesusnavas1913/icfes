@@ -30,8 +30,8 @@ if hasattr(sys.stdout, "reconfigure"):
         pass
 
 # Import sympy for safe mathematical evaluation
+# Import sympy for safe mathematical evaluation
 import sympy as sp
-
 
 # Cargar variables de entorno
 load_dotenv()
@@ -43,6 +43,8 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__, static_folder='static')
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key')
 
+# Import CSRF from extensions
+from extensions import csrf
 
 # CORS configurado para desarrollo y producción
 # Configuración específica para dominios permitidos
@@ -59,12 +61,11 @@ CORS(app, resources={
     }
 })
 
-# Configuración de API de IA (SOLO desde variable de entorno)
+# Configuración de API de IA (Gemini como principal)
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 if not GOOGLE_API_KEY:
     logger.error("❌ GOOGLE_API_KEY no encontrada en variables de entorno")
-    logger.error("💡 Crea un archivo .env con: GOOGLE_API_KEY=tu_api_key")
     raise ValueError("Se requiere GOOGLE_API_KEY en archivo .env")
 
 genai.configure(api_key=GOOGLE_API_KEY)
@@ -80,8 +81,8 @@ genai.configure(api_key=GOOGLE_API_KEY)
 # ============================================================
 class GeminiEvaluator:
     def __init__(self):
-        self.model = genai.GenerativeModel('gemini-2.0-flash')
-        self.default_model = "gemini-2.0-flash"
+        self.model_name = 'models/gemini-2.5-flash-lite'
+        self.model = genai.GenerativeModel(self.model_name)
         self.custom_knowledge_base = {}  # Base de conocimiento personalizada
         self.trained_prompts = {}  # Prompts entrenados por competencia
 
@@ -89,7 +90,7 @@ class GeminiEvaluator:
         """Hace una petición a la API de Google Gemini con manejo robusto de errores"""
         for attempt in range(max_retries):
             try:
-                logger.info(f"Enviando petición a Gemini (intento {attempt + 1}/{max_retries})")
+                logger.info(f"Enviando petición a Gemini {self.model_name} (intento {attempt + 1}/{max_retries})")
 
                 generation_config = genai.types.GenerationConfig(
                     temperature=temperature,
@@ -218,6 +219,83 @@ Responde ÚNICAMENTE con el JSON válido.
         except Exception as e:
             logger.error(f"Error analizando documento con Gemini: {str(e)}")
             raise Exception(f"Error al analizar documento con Gemini: {str(e)}")
+
+    def generate_lesson_plan(self, grade, topic, area, dba, duration):
+        """Genera una secuencia didáctica completa basada en el tema, grado, área y DBA"""
+        prompt = f"""
+Eres un 'Robot Profesor' experto en pedagogía para la Institución Educativa Guaimaral.
+Tu tarea es crear una SECUENCIA DIDÁCTICA detallada y completa (FORMATO 100% LLENO).
+
+DATOS DE ENTRADA:
+- Grado: {grade}
+- Área: {area}
+- Tema: {topic}
+- DBA (Derechos Básicos de Aprendizaje): {dba}
+- Duración/Sesiones: {duration}
+
+Debes generar el contenido para llenar TODOS los apartados del formato institucional.
+INSTRUCCIONES CLAVE:
+1. Actividades DETALLADAS: Incluye materiales específicos, tiempos y qué se hace minuto a minuto.
+2. Imprimibles: Describe exactamente qué debe tener la hoja de trabajo (dibujos, textos).
+3. Rúbrica: Crea una tabla con criterios de evaluación.
+4. Evaluación Final: Genera preguntas tipo ICFES o actividades evaluativas listas para imprimir.
+
+FORMATO JSON REQUERIDO:
+{{
+    "titulo": "Título creativo de la secuencia",
+    "area": "{area}",
+    "tema": "{topic}",
+    "grado": "{grade}",
+    "tiempo": "{duration}",
+    "objetivo": "Objetivo de aprendizaje (Qué, Cómo, Para qué)",
+    "competencias": "Competencias específicas del área",
+    "dba": "{dba}",
+    "actividad_dinamica": {{
+        "nombre": "Nombre del juego inicial",
+        "descripcion": "Instrucciones paso a paso del juego de calentamiento.",
+        "materiales": "Materiales necesarios para el juego"
+    }},
+    "sesiones": [
+        {{
+            "dia": 1,
+            "fase_exploracion": "Actividad de saberes previos (15 min)",
+            "fase_estructuracion": "Explicación del concepto (teoría y ejemplos) (30 min)",
+            "fase_transferencia": "Trabajo práctico o taller en clase (45 min)",
+            "recursos": "Lista puntual de materiales (ej. Fotocopias, colores, video beam)",
+            "criterio_evaluacion": "Qué se evalúa hoy"
+        }}
+    ],
+    "rubrica": [
+        {{
+            "criterio": "Criterio 1 (ej. Comprende el concepto...)",
+            "superior": "Descripción desempeño superior",
+            "alto": "Descripción desempeño alto",
+            "basico": "Descripción desempeño básico",
+            "bajo": "Descripción desempeño bajo"
+        }},
+        {{
+            "criterio": "Criterio 2 (ej. Participación...)",
+            "superior": "...", "alto": "...", "basico": "...", "bajo": "..."
+        }}
+    ],
+    "evaluacion_imprimible": {{
+        "titulo": "Evaluación de {topic}",
+        "preguntas": [
+            {{ "pregunta": "¿Qué es...?", "tipo": "Abierta/Selección", "opciones": ["a", "b"] }}
+        ],
+        "actividad_final": "Descripción de tarea para la casa o proyecto"
+    }},
+    "bibliografia": "Libros de texto y links web",
+    "observaciones": "Ajustes razonables para estudiantes con dificultades"
+}}
+"""
+        try:
+            # Aumentar max_tokens porque la respuesta ahora es mucho más larga
+            response = self._make_gemini_request(prompt, temperature=0.7, max_tokens=8000)
+            return response
+        except Exception as e:
+            logger.error(f"Error generando planeación de clase: {str(e)}")
+            raise Exception(f"Error al generar planeación: {str(e)}")
 
 # Inicializar evaluador
 evaluator = GeminiEvaluator()
@@ -367,6 +445,7 @@ def _safe_parse_shapes_response(raw_text):
 # ENDPOINTS DE GENERACIÓN DE PREGUNTAS
 # ============================================================
 @app.route('/generate-question', methods=['POST'])
+@csrf.exempt
 def generate_question():
     """Generar preguntas ICFES con diferentes niveles de dificultad usando conocimiento personalizado"""
     data = request.json
@@ -492,6 +571,7 @@ Genera las preguntas ahora:"""
 # ENDPOINTS DE RETROALIMENTACIÓN
 # ============================================================
 @app.route('/evaluate-order', methods=['POST'])
+@csrf.exempt
 def evaluate_order():
     """Evalúa el orden de elementos reordenados por el estudiante"""
     data = request.json
@@ -577,6 +657,7 @@ Sé claro, constructivo y motivador en tu retroalimentación."""
         return jsonify({'error': f'Error al evaluar el orden: {str(e)}'}), 500
 
 @app.route('/get-feedback', methods=['POST'])
+@csrf.exempt
 def get_feedback():
     """Obtener retroalimentación detallada de la respuesta del estudiante"""
     data = request.json
@@ -639,6 +720,7 @@ Sé claro, constructivo y motivador en tu retroalimentación."""
 # ENDPOINTS DE ANÁLISIS DE DOCUMENTOS
 # ============================================================
 @app.route('/analyze-document', methods=['POST'])
+@csrf.exempt
 def analyze_document():
     """Analiza un documento completo (PDF o Word) con validación robusta"""
     try:
@@ -732,6 +814,7 @@ def analyze_document():
 # ENDPOINTS DE CONOCIMIENTO PERSONALIZADO
 # ============================================================
 @app.route('/add-custom-knowledge', methods=['POST'])
+@csrf.exempt
 def add_custom_knowledge():
     """Añadir conocimiento personalizado para mejorar las preguntas ICFES"""
     data = request.json
@@ -797,6 +880,7 @@ def get_custom_knowledge():
 # ENDPOINTS DE GUARDADO DE MODELOS
 # ============================================================
 @app.route('/save-model', methods=['POST'])
+@csrf.exempt
 def save_model():
     """Guardar modelo entrenado en archivo JSON"""
     try:
@@ -844,6 +928,7 @@ def save_model():
         return jsonify({'error': f'Error al guardar el modelo: {str(e)}'}), 500
 
 @app.route('/generate-visual', methods=['POST'])
+@csrf.exempt
 def generate_visual():
     """Genera gráficos visuales (bar/pie) para análisis de preguntas ICFES usando Gemini para datos"""
     data = request.json
@@ -978,6 +1063,7 @@ IMPORTANTE: El JSON debe ser válido y parseable. Los valores deben ser números
 # ENDPOINT: VISUAL POR COMPETENCIA (AGREGADO)
 # ============================================================
 @app.route('/generate-visual-by-competencia', methods=['POST'])
+@csrf.exempt
 def generate_visual_by_competencia():
     """Agrupa elementos por 'competencia' y genera un gráfico de barras editorial.
 
@@ -1245,6 +1331,7 @@ def _draw_geometry(ax, shapes):
 
 
 @app.route('/generate-geometry-visual', methods=['POST'])
+@csrf.exempt
 def generate_geometry_visual():
     """Genera una figura geométrica basada en el texto de la pregunta usando un plan JSON devuelto por IA."""
     data = request.json or {}
@@ -1336,6 +1423,7 @@ Enunciado:
 # NUEVO ENDPOINT: SUBMIT ALL ANSWERS - VERIFICACIÓN BATCH
 # ============================================================
 @app.route('/submit-all-answers', methods=['POST'])
+@csrf.exempt
 def submit_all_answers():
     """
     Recibe todas las respuestas del estudiante de una vez,
@@ -1450,6 +1538,7 @@ Sé claro, motivador y educativo. Responda en español."""
 # ENDPOINT PARA CHAT CON TUTOR IA
 # ============================================================
 @app.route('/api/chat', methods=['POST'])
+@csrf.exempt
 def chat_with_ai():
     """Endpoint para chatear con el tutor IA especializado en ICFES"""
     try:
@@ -1517,6 +1606,51 @@ Responde como un tutor experto, proporcionando la ayuda más útil posible."""
         return jsonify({'error': f'Error procesando mensaje: {str(e)}'}), 500
 
 # ============================================================
+# ENDPOINT PLANEADOR DE CLASES (ROBOT PROFESOR)
+# ============================================================
+@app.route('/generate-lesson-plan', methods=['POST'])
+@csrf.exempt
+def generate_lesson_plan_endpoint():
+    """Genera una planeación de clase usando el 'Robot Profesor'"""
+    data = request.json
+    grade = data.get('grade')
+    topic = data.get('topic')
+    duration = data.get('duration')
+    # Nuevos campos
+    area = data.get('area', 'General')
+    dba = data.get('dba', 'Autogenerar DBA correspondiente')
+
+    if not grade or not topic:
+        return jsonify({'error': 'Grado y Tema son requeridos'}), 400
+
+    try:
+        # Generar planeación con IA (pasar nuevos parámetros)
+        raw_response = evaluator.generate_lesson_plan(grade, topic, area, dba, duration)
+        
+        # Limpiar y parsear JSON
+        cleaned_response = clean_json_response(raw_response)
+        lesson_plan = json.loads(cleaned_response)
+
+        return jsonify({
+            'success': True,
+            'lesson_plan': lesson_plan,
+            'metadata': {
+                'grade': grade,
+                'topic': topic,
+                'area': area,
+                'dba': dba,
+                'duration': duration,
+                'generated_at': datetime.now().isoformat()
+            }
+        })
+
+    except json.JSONDecodeError:
+        return jsonify({'error': 'La IA generó una respuesta con formato inválido', 'raw': raw_response}), 500
+    except Exception as e:
+        logger.error(f"Error en endpoint lesson plan: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# ============================================================
 # ENDPOINTS ADMINISTRATIVOS
 # ============================================================
 @app.route('/users', methods=['GET'])
@@ -1574,7 +1708,7 @@ def print_startup_banner():
     print("=" * 60)
     print("🚀 ICFES PRO - BACKEND UNIFICADO")
     print("=" * 60)
-    print(f"🔑 Google Gemini API: {'✅ Configurada' if GOOGLE_API_KEY else '❌ No encontrada'}")
+    print(f"🔑 Google Gemini API: {'✅ Configurada' if os.getenv('GOOGLE_API_KEY') else '❌ No encontrada'}")
     print(f"👥 Autenticación: Supabase (sin usuarios demo)")
     print("🌐 Servidor iniciado")
     print("=" * 60)

@@ -3,50 +3,63 @@ from flask import render_template, redirect, request, session, jsonify, flash
 from icfes_api import app
 from supabase_client import get_supabase_client
 import re
+import json
 
 # ===========================================
 # CONFIGURACIÓN DE SEGURIDAD CRÍTICA
 # ===========================================
+from extensions import csrf
 from security_config import configure_security
-limiter, csrf = configure_security(app)
+limiter = configure_security(app, csrf)
 
-# Eximir rutas de registro de CSRF (ya están protegidas por rate limiting)
-csrf.exempt('register_estudiante')
-csrf.exempt('register_profesor')
+# ===========================================
+# MANEJO DE ERRORES GLOBAL (JSON)
+# ===========================================
+@app.errorhandler(400)
+def bad_request(e):
+    if request.is_json or request.path.startswith('/api/') or request.path in ['/login', '/register/estudiante', '/register/profesor']:
+        return jsonify({'success': False, 'message': f'Bad Request: {str(e)}'}), 400
+    return render_template('error.html', error=e), 400
+
+@app.errorhandler(404)
+def not_found(e):
+    if request.is_json or request.path.startswith('/api/'):
+        return jsonify({'success': False, 'message': 'Resource not found'}), 404
+    return render_template('error.html', error=e), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    if request.is_json or request.path.startswith('/api/') or request.path in ['/login', '/register/estudiante', '/register/profesor']:
+        return jsonify({'success': False, 'message': f'Internal Server Error: {str(e)}'}), 500
+    return render_template('error.html', error=e), 500
+
 
 # Rutas de páginas (Front)
 @app.route('/')
 def root_page():
-    return render_template('login.html')
+    return render_template('index.html')
 
 @app.route('/login')
 def login_page():
-    # Verificar si el usuario ya está logueado
-    if 'user_type' in session:
-        if session['user_type'] == 'profesor':
-            return redirect('/dashboard/profesor')
-        elif session['user_type'] == 'estudiante':
-            return redirect('/dashboard/estudiante')
+    # Limpiar sesión al acceder a login
+    session.clear()
     return render_template('login.html')
+
+@app.route('/test-connectivity')
+def test_connectivity():
+    """Página de prueba para verificar conectividad con el backend"""
+    return render_template('test_connectivity.html')
 
 @app.route('/login/profesor')
 def login_profesor_page():
-    # Verificar si el usuario ya está logueado
-    if 'user_type' in session:
-        if session['user_type'] == 'profesor':
-            return redirect('/dashboard/profesor')
-        elif session['user_type'] == 'estudiante':
-            return redirect('/dashboard/estudiante')
+    # Limpiar sesión al acceder a login
+    session.clear()
     return render_template('login.html', user_type='profesor')
 
 @app.route('/login/estudiante')
 def login_estudiante_page():
-    # Verificar si el usuario ya está logueado
-    if 'user_type' in session:
-        if session['user_type'] == 'profesor':
-            return redirect('/dashboard/profesor')
-        elif session['user_type'] == 'estudiante':
-            return redirect('/dashboard/estudiante')
+    # Limpiar sesión al acceder a login
+    session.clear()
     return render_template('login.html', user_type='estudiante')
 
 @app.route('/inicio')
@@ -61,6 +74,11 @@ def inicio_page():
         return render_template('dashboard_estudiante.html')
     else:
         return redirect('/login')
+
+@app.route('/test-login')
+def test_login():
+    return render_template('test_login.html')
+
 
 @app.route('/dashboard/profesor')
 def dashboard_profesor():
@@ -162,17 +180,8 @@ def library_page():
         return redirect('/dashboard-estudiante')  # Redirigir estudiantes a su dashboard
     return render_template('library.html')
 
-@app.route('/reorder')
-def reorder_page():
-    # Verificar si el usuario está logueado
-    if 'user_type' not in session:
-        return redirect('/login/estudiante')
-    # Solo estudiantes pueden acceder al reorder
-    if session['user_type'] != 'estudiante':
-        return redirect('/dashboard')  # Redirigir profesores a su dashboard
-    return render_template('icfes_order_exercise.html')
-
 @app.route('/register/profesor', methods=['GET', 'POST'])
+@csrf.exempt
 @limiter.limit("3 per minute")  # Máximo 3 registros por minuto
 def register_profesor():
     if request.method == 'POST':
@@ -202,21 +211,22 @@ def register_profesor():
         # Encriptar contraseña
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-        # Insertar en Supabase con aprobado=False por defecto
+        # Insertar en Supabase con aprobado=True (auto-aprobado)
         new_user = {
             'nombre': nombre,
             'cedula': cedula,
             'email': email,
             'password': hashed_password,
-            'aprobado': False
+            'aprobado': True
         }
         supabase.table('profesores').insert(new_user).execute()
 
-        return jsonify({'success': True, 'message': 'Registro exitoso. Tu cuenta está pendiente de aprobación por un administrador.'})
+        return jsonify({'success': True, 'message': 'Registro exitoso. Ya puedes iniciar sesión.'})
 
     return render_template('register_profesor.html')
 
 @app.route('/register/estudiante', methods=['GET', 'POST'])
+@csrf.exempt
 @limiter.limit("3 per minute")  # Máximo 3 registros por minuto
 def register_estudiante():
     if request.method == 'POST':
@@ -246,13 +256,13 @@ def register_estudiante():
         # Encriptar contraseña
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-        # Insertar en Supabase con aprobado=False por defecto
+        # Insertar en Supabase con aprobado=True (auto-aprobado)
         new_user = {
             'nombre': nombre,
             'cedula': cedula,
             'email': email,
             'password': hashed_password,
-            'aprobado': False
+            'aprobado': True
         }
         supabase.table('estudiantes').insert(new_user).execute()
 
@@ -261,45 +271,75 @@ def register_estudiante():
     return render_template('register_estudiante.html')
 
 @app.route('/login', methods=['POST'])
+@csrf.exempt
 @limiter.limit("5 per minute")  # Máximo 5 intentos de login por minuto
 def login():
-    data = request.get_json()
-    cedula = data.get('cedula')
-    password = data.get('password')
+    try:
+        # Log request details
+        print(f"DEBUG: Login request received")
+        print(f"DEBUG: Content-Type: {request.content_type}")
+        print(f"DEBUG: Request data: {request.data}")
+        
+        data = request.get_json()
+        print(f"DEBUG: Parsed JSON: {data}")
+        
+        if data is None:
+            print("ERROR: No JSON data received")
+            return jsonify({'success': False, 'message': 'No se recibieron datos JSON'}), 400
+            
+        cedula = data.get('cedula')
+        password = data.get('password')
+        
+        print(f"DEBUG: Cedula: {cedula}, Password length: {len(password) if password else 0}")
 
-    if not cedula or not password:
-        return jsonify({'success': False, 'message': 'Datos incompletos'}), 400
+        if not cedula or not password:
+            print("ERROR: Datos incompletos")
+            return jsonify({'success': False, 'message': 'Datos incompletos'}), 400
 
-    supabase = get_supabase_client()
+        supabase = get_supabase_client()
+        print("DEBUG: Supabase client obtained")
 
-    # Buscar en tabla profesores
-    profesor = supabase.table('profesores').select('*').eq('cedula', cedula).execute()
-    if profesor.data:
-        user = profesor.data[0]
-        if not user.get('aprobado', False):
-            return jsonify({'success': False, 'message': 'Tu cuenta está pendiente de aprobación por un administrador'}), 403
-        if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
-            session['user_id'] = user['id']
-            session['user_type'] = 'profesor'
-            return jsonify({'success': True, 'redirect': '/dashboard/profesor'})
-        else:
-            return jsonify({'success': False, 'message': 'Contraseña incorrecta'}), 401
+        # Buscar en tabla profesores
+        profesor = supabase.table('profesores').select('*').eq('cedula', cedula).execute()
+        print(f"DEBUG: Profesor query result: {len(profesor.data) if profesor.data else 0} records")
+        
+        if profesor.data:
+            user = profesor.data[0]
+            # Check de 'aprobado' eliminado - todos pueden entrar
+            if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
+                session['user_id'] = user['id']
+                session['user_type'] = 'profesor'
+                print(f"DEBUG: Login exitoso para profesor: {cedula}")
+                return jsonify({'success': True, 'redirect': '/dashboard/profesor'})
+            else:
+                print("DEBUG: Contraseña incorrecta para profesor")
+                return jsonify({'success': False, 'message': 'Contraseña incorrecta'}), 401
 
-    # Si no en profesores, buscar en estudiantes
-    estudiante = supabase.table('estudiantes').select('*').eq('cedula', cedula).execute()
-    if estudiante.data:
-        user = estudiante.data[0]
-        if not user.get('aprobado', False):
-            return jsonify({'success': False, 'message': 'Tu cuenta está pendiente de aprobación por un administrador'}), 403
-        if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
-            session['user_id'] = user['id']
-            session['user_type'] = 'estudiante'
-            return jsonify({'success': True, 'redirect': '/dashboard/estudiante'})
-        else:
-            return jsonify({'success': False, 'message': 'Cédula o contraseña incorrecta'}), 401
+        # Si no en profesores, buscar en estudiantes
+        estudiante = supabase.table('estudiantes').select('*').eq('cedula', cedula).execute()
+        print(f"DEBUG: Estudiante query result: {len(estudiante.data) if estudiante.data else 0} records")
+        
+        if estudiante.data:
+            user = estudiante.data[0]
+            # Check de 'aprobado' eliminado - todos pueden entrar
+            if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
+                session['user_id'] = user['id']
+                session['user_type'] = 'estudiante'
+                print(f"DEBUG: Login exitoso para estudiante: {cedula}")
+                return jsonify({'success': True, 'redirect': '/dashboard/estudiante'})
+            else:
+                print("DEBUG: Contraseña incorrecta para estudiante")
+                return jsonify({'success': False, 'message': 'Cédula o contraseña incorrecta'}), 401
 
-    # No encontrado en ninguna tabla
-    return jsonify({'success': False, 'message': 'Usuario no encontrado'}), 404
+        # No encontrado en ninguna tabla
+        print(f"DEBUG: Usuario no encontrado: {cedula}")
+        return jsonify({'success': False, 'message': 'Usuario no encontrado'}), 404
+        
+    except Exception as e:
+        print(f"ERROR en login: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Error interno: {str(e)}'}), 500
 
 @app.route('/logout')
 def logout():
@@ -313,6 +353,8 @@ def logout():
 
 @app.route('/admin/login')
 def admin_login_page():
+    # Limpiar sesión al acceder a login de admin
+    session.clear()
     return render_template('admin_login.html')
 
 @app.route('/admin/dashboard')
@@ -338,6 +380,7 @@ def admin_pending_users():
 # ===========================================
 
 @app.route('/api/admin/login', methods=['POST'])
+@csrf.exempt
 @limiter.limit("5 per minute")  # Máximo 5 intentos de login por minuto
 def admin_login():
     data = request.get_json()
@@ -366,6 +409,7 @@ def admin_login():
     return jsonify({'success': False, 'message': 'Cédula o contraseña incorrecta'}), 401
 
 @app.route('/api/admin/users', methods=['GET'])
+@csrf.exempt
 def get_all_users():
     if 'user_type' not in session or session['user_type'] != 'admin':
         return jsonify({'error': 'Acceso no autorizado'}), 403
@@ -388,6 +432,7 @@ def get_all_users():
         return jsonify({'error': f'Error obteniendo usuarios: {str(e)}'}), 500
 
 @app.route('/api/admin/pending-users', methods=['GET'])
+@csrf.exempt
 def get_pending_users():
     if 'user_type' not in session or session['user_type'] != 'admin':
         return jsonify({'error': 'Acceso no autorizado'}), 403
@@ -410,6 +455,7 @@ def get_pending_users():
         return jsonify({'error': f'Error obteniendo usuarios pendientes: {str(e)}'}), 500
 
 @app.route('/api/admin/approve-user', methods=['POST'])
+@csrf.exempt
 def approve_user():
     if 'user_type' not in session or session['user_type'] != 'admin':
         return jsonify({'error': 'Acceso no autorizado'}), 403
@@ -449,6 +495,7 @@ def approve_user():
         return jsonify({'error': f'Error aprobando usuario: {str(e)}'}), 500
 
 @app.route('/api/admin/reject-user', methods=['POST'])
+@csrf.exempt
 def reject_user():
     if 'user_type' not in session or session['user_type'] != 'admin':
         return jsonify({'error': 'Acceso no autorizado'}), 403
@@ -471,6 +518,7 @@ def reject_user():
         return jsonify({'error': f'Error rechazando usuario: {str(e)}'}), 500
 
 @app.route('/api/admin/delete-user', methods=['POST'])
+@csrf.exempt
 def delete_user():
     if 'user_type' not in session or session['user_type'] != 'admin':
         return jsonify({'error': 'Acceso no autorizado'}), 403
