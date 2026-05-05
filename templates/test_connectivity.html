@@ -82,7 +82,7 @@
 
         const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://127.0.0.1:5000'
-            : 'https://icfes-ia.onrender.com';
+            : window.location.origin;
 
         document.getElementById('api-url').textContent = API_URL;
 

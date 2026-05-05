@@ -19,7 +19,7 @@
     const API_URL = (window.ENV && window.ENV.API_URL) || 
         (hostname === 'localhost' || hostname === '127.0.0.1' 
             ? 'http://127.0.0.1:5000' 
-            : 'https://icfes-ia.onrender.com');
+            : window.location.origin);
 
     // Exportar como variables globales para compatibilidad
     window.API_URL = API_URL;

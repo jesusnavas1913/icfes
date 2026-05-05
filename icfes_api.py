@@ -53,12 +53,7 @@ from extensions import csrf
 # Configuración específica para dominios permitidos
 CORS(app, resources={
     r"/*": {
-        "origins": [
-            "https://icfes-ia.onrender.com",
-            "http://localhost:3000",
-            "http://127.0.0.1:5000",
-            "http://localhost:5000"
-        ],
+        "origins": "*",
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"]
     }

@@ -565,7 +565,7 @@
         }
 
         async function fetchQuestions(subject, numQuestions, difficulty) {
-            const API_URL = window.API_URL || 'https://icfes-ia.onrender.com';
+            const API_URL = window.API_URL || window.location.origin;
             const response = await fetch(`${API_URL}/generate-question`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -658,7 +658,7 @@
                 };
             });
 
-            const API_URL = window.API_URL || 'https://icfes-ia.onrender.com';
+            const API_URL = window.API_URL || window.location.origin;
 
             try {
                 // Enviar todas las respuestas al backend
@@ -831,7 +831,7 @@
                 // Cancelar request anterior si existe
                 if (geomAbortController) geomAbortController.abort();
                 geomAbortController = new AbortController();
-                const API_URL = window.API_URL || 'https://icfes-ia.onrender.com';
+                const API_URL = window.API_URL || window.location.origin;
                 const resp = await fetch(`${API_URL}/generate-geometry-visual`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

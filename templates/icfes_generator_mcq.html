@@ -847,7 +847,7 @@
         const CONFIG = {
             API_URL: window.API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
                 ? 'http://127.0.0.1:5000' 
-                : 'https://icfes-ia.onrender.com'),
+                : window.location.origin),
             MAX_QUESTIONS: 20,
             MIN_QUESTIONS: 1
         };
