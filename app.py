@@ -12,6 +12,10 @@ from extensions import csrf
 from security_config import configure_security
 limiter = configure_security(app, csrf)
 
+@app.route('/')
+def index():
+    return render_template('index.html')
+
 # ===========================================
 # MANEJO DE ERRORES GLOBAL (JSON)
 # ===========================================
